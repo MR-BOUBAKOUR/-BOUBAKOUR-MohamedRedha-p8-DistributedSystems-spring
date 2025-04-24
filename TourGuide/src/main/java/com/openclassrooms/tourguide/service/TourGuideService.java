@@ -1,5 +1,6 @@
 package com.openclassrooms.tourguide.service;
 
+import com.openclassrooms.tourguide.dto.NearbyAttractionDTO;
 import com.openclassrooms.tourguide.helper.InternalTestHelper;
 import com.openclassrooms.tourguide.tracker.Tracker;
 import com.openclassrooms.tourguide.user.User;
@@ -7,15 +8,7 @@ import com.openclassrooms.tourguide.user.UserReward;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
@@ -105,13 +98,28 @@ public class TourGuideService {
 		return providers;
 	}
 
-	public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {
-		List<Attraction> nearbyAttractions = new ArrayList<>();
+	public List<NearbyAttractionDTO> getNearByAttractions(VisitedLocation visitedLocation, User user) {
+		List<NearbyAttractionDTO> nearbyAttractions = new ArrayList<>();
 
-		for (Attraction attraction : gpsUtil.getAttractions()) {
-			if (rewardsService.isWithinAttractionProximity(attraction, visitedLocation.location)) {
-				nearbyAttractions.add(attraction);
-			}
+		List<Attraction> fiveNearbyAttractions = gpsUtil.getAttractions().stream()
+				.sorted(Comparator.comparingDouble(attraction -> rewardsService.getDistance(attraction, visitedLocation.location)))
+				.limit(5)
+				.toList();
+
+		for (Attraction nearbyAttraction : fiveNearbyAttractions) {
+			double distance = rewardsService.getDistance(nearbyAttraction, visitedLocation.location);
+			int rewardPoints = rewardsService.getRewardPoints(nearbyAttraction, user);
+
+			nearbyAttractions.add(new NearbyAttractionDTO(
+					nearbyAttraction.attractionName,
+					nearbyAttraction.latitude,
+					nearbyAttraction.longitude,
+					distance,
+					rewardPoints,
+					visitedLocation.location.latitude,
+					visitedLocation.location.longitude
+			));
+
 		}
 
 		return nearbyAttractions;
