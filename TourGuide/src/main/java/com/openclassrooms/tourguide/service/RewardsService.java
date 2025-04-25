@@ -18,7 +18,7 @@ public class RewardsService {
     private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.15077945;
 
 	// proximity in miles
-    private int defaultProximityBuffer = 100;
+    private int defaultProximityBuffer = 10;
 	private int proximityBuffer = defaultProximityBuffer;
 	private int attractionProximityRange = 200;
 	private final GpsUtil gpsUtil;
@@ -38,7 +38,7 @@ public class RewardsService {
 	}
 	
 	public void calculateRewards(User user) {
-		List<VisitedLocation> userLocations = user.getVisitedLocations();
+		List<VisitedLocation> visitedLocations = user.getVisitedLocations();
 
 		// excluding the old locations which are already evaluated / rewardPoints already calculated & stored for them
 		// none at init
@@ -49,12 +49,14 @@ public class RewardsService {
 		// extracting the new locations - calculating their rewardPoints /
 		// (generateUserLocationHistory = 3) + (trackUserLocation = 1) || (trackUserLocation = 1)
 
-		for(VisitedLocation visitedLocation : userLocations) {
+		for(VisitedLocation visitedLocation : visitedLocations) {
 			for(Attraction attraction : attractions) {
-				if(user.getUserRewards().stream().noneMatch(r -> r.attraction.attractionName.equals(attraction.attractionName))) {
-					if(nearAttraction(visitedLocation, attraction)) {
-						user.addUserReward(new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
-					}
+				if(nearAttraction(visitedLocation, attraction)) {
+					user.addToUserRewards(
+							new UserReward(
+									visitedLocation,
+									attraction,
+									getRewardPoints(attraction, user)));
 				}
 			}
 		}
