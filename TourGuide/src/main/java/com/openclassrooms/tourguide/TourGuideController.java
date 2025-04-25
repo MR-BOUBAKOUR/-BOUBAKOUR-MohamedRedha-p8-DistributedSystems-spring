@@ -58,6 +58,12 @@ public class TourGuideController {
     public List<UserReward> getRewards(@RequestParam String userName) {
     	return tourGuideService.getUserRewards(getUser(userName));
     }
+
+    @RequestMapping("/getVisitedLocations")
+    public List<VisitedLocation> getVisitedLocations(@RequestParam String userName) {
+        return tourGuideService.getUserVisitedLocations(getUser(userName));
+
+    }
        
     @RequestMapping("/getTripDeals")
     public List<Provider> getTripDeals(@RequestParam String userName) {

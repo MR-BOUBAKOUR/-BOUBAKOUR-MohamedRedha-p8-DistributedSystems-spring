@@ -80,6 +80,10 @@ public class TourGuideService {
 		return user.getUserRewards();
 	}
 
+	public List<VisitedLocation> getUserVisitedLocations(User user) {
+		return user.getVisitedLocations();
+	}
+
 	public List<Provider> getTripDeals(User user) {
 		int cumulativeRewardPoints = user.getUserRewards().stream()
 				.mapToInt(UserReward::getRewardPoints)
@@ -178,5 +182,4 @@ public class TourGuideService {
 		LocalDateTime localDateTime = LocalDateTime.now().minusDays(new Random().nextInt(30));
 		return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
 	}
-
 }

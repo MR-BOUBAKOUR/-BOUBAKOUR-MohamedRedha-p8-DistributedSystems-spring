@@ -68,11 +68,12 @@ public class User {
 	public void clearVisitedLocations() {
 		visitedLocations.clear();
 	}
-	
+
 	public void addUserReward(UserReward userReward) {
-		if(userRewards.stream()
-				.filter(r -> !r.attraction.attractionName.equals(userReward.attraction))
-				.count() == 0) {
+		boolean attractionAlreadyRewarded = userRewards.stream()
+				.anyMatch(r -> r.attraction.attractionName.equals(userReward.attraction.attractionName));
+
+		if(!attractionAlreadyRewarded) {
 			userRewards.add(userReward);
 		}
 	}
