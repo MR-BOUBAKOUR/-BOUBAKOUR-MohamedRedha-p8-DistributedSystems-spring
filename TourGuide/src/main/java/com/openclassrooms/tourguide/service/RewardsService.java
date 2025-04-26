@@ -1,7 +1,8 @@
 package com.openclassrooms.tourguide.service;
 
+import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,8 @@ public class RewardsService {
 	private int attractionProximityRange = 200;
 	private final GpsUtil gpsUtil;
 	private final RewardCentral rewardsCentral;
+
+	private List<Attraction> cachedAttractions = null;
 	
 	public RewardsService(GpsUtil gpsUtil, RewardCentral rewardCentral) {
 		this.gpsUtil = gpsUtil;
@@ -36,32 +39,40 @@ public class RewardsService {
 	public void setDefaultProximityBuffer() {
 		proximityBuffer = defaultProximityBuffer;
 	}
-	
+
+	private List<Attraction> getAttractions() {
+		if (cachedAttractions == null) {
+			cachedAttractions = gpsUtil.getAttractions();
+		}
+		return cachedAttractions;
+	}
+
 	public void calculateRewards(User user) {
 		List<VisitedLocation> visitedLocations = user.getVisitedLocations();
+		List<Attraction> attractions = getAttractions();
 
-		// excluding the old locations which are already evaluated / rewardPoints already calculated & stored for them
-		// none at init
+		// the "old" locations which are already rewarded
+		Set<String> rewardedAttractionNames = new HashSet<>();
+		for (UserReward userReward : user.getUserRewards()) {
+			rewardedAttractionNames.add(userReward.attraction.attractionName);
+		}
 
-		// caching the attractions ?
-		List<Attraction> attractions = gpsUtil.getAttractions();
-
-		// extracting the new locations - calculating their rewardPoints /
-		// (generateUserLocationHistory = 3) + (trackUserLocation = 1) || (trackUserLocation = 1)
-
+		// calculating the rewardPoints for the attraction "if not rewarded" THEN "if within the proximity buffer"
 		for(VisitedLocation visitedLocation : visitedLocations) {
 			for(Attraction attraction : attractions) {
-				if(nearAttraction(visitedLocation, attraction)) {
+				if(!rewardedAttractionNames.contains(attraction.attractionName) && nearAttraction(visitedLocation, attraction)) {
 					user.addToUserRewards(
 							new UserReward(
 									visitedLocation,
 									attraction,
-									getRewardPoints(attraction, user)));
+									getRewardPoints(attraction, user))
+					);
+					rewardedAttractionNames.add(attraction.attractionName);
 				}
 			}
 		}
 	}
-	
+
 	public boolean isWithinAttractionProximity(Attraction attraction, Location location) {
 		return !(getDistance(attraction, location) > attractionProximityRange);
 	}
@@ -87,5 +98,4 @@ public class RewardsService {
 
         return STATUTE_MILES_PER_NAUTICAL_MILE * nauticalMiles;
 	}
-
 }
