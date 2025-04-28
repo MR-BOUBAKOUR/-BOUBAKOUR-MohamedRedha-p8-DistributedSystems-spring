@@ -31,26 +31,10 @@ public class TourGuideController {
     public VisitedLocation getLocation(@RequestParam String userName) {
     	return tourGuideService.getUserLocation(getUser(userName));
     }
-    
-    //  TODO: Change this method to no longer return a List of Attractions.
- 	//  Instead: Get the closest five tourist attractions to the user - no matter how far away they are.
- 	//  Return a new JSON object that contains:
-    	// Name of Tourist attraction, 
-        // Tourist attractions lat/long, 
-        // The user's location lat/long, 
-        // The distance in miles between the user's location and each of the attractions.
-        // The reward points for visiting each Attraction.
-        //    Note: Attraction reward points can be gathered from RewardsCentral
+
     @RequestMapping("/getNearbyAttractions") 
     public List<NearbyAttractionDTO> getNearbyAttractions(@RequestParam String userName) {
     	VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName));
-
-        System.out.println("VisitedLocation of the user :");
-        System.out.println("  UserId      : " + visitedLocation.userId);
-        System.out.println("  Latitude    : " + visitedLocation.location.latitude);
-        System.out.println("  Longitude   : " + visitedLocation.location.longitude);
-        System.out.println("  TimeVisited : " + visitedLocation.timeVisited);
-
     	return tourGuideService.getNearByAttractions(visitedLocation, getUser(userName));
     }
     

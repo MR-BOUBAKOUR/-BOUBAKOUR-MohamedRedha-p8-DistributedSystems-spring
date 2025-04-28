@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.Async;
@@ -22,6 +24,9 @@ import com.openclassrooms.tourguide.user.UserReward;
 
 @Service
 public class RewardsService {
+
+	private final Logger logger = LoggerFactory.getLogger(RewardsService.class);
+
     private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.15077945;
 
 	// proximity in miles
@@ -75,10 +80,15 @@ public class RewardsService {
 	}
 
 	public CompletableFuture<Void> calculateRewardsAsync(User user) {
-		return CompletableFuture.runAsync(() -> {
-			System.out.println("Thread executing calculateRewardsAsync for user: " + user.getUserName() + " - Thread: " + Thread.currentThread().getName());
-			calculateRewards(user);
-		}, taskExecutor);
+		return CompletableFuture
+				.runAsync(() -> {
+                    logger.info("CalculateRewardsAsync for user: {} - Thread: {}", user.getUserName(), Thread.currentThread().getName());
+					calculateRewards(user);
+				}, taskExecutor)
+				.exceptionally(ex -> {
+					logger.error("Error in the calculateRewardsAsync : {}", ex.getMessage(), ex);
+					return null;
+				});
 	}
 
 	public boolean isWithinAttractionProximity(Attraction attraction, Location location) {
