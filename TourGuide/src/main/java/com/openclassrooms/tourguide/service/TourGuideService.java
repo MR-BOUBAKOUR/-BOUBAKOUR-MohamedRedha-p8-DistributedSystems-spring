@@ -10,10 +10,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -33,11 +36,14 @@ public class TourGuideService {
 	private final TripPricer tripPricer = new TripPricer();
 	public final Tracker tracker;
 	boolean testMode = true;
+	private final TaskExecutor taskExecutor;
 
-	public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService) {
+
+	public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService, @Qualifier("customTaskExecutor") TaskExecutor taskExecutor) {
 		this.gpsUtil = gpsUtil;
 		this.rewardsService = rewardsService;
-		
+		this.taskExecutor = taskExecutor;
+
 		Locale.setDefault(Locale.US);
 
 		if (testMode) {
@@ -79,17 +85,17 @@ public class TourGuideService {
 		return visitedLocation;
 	}
 
-	@Async("taskExecutor")
 	public CompletableFuture<VisitedLocation> trackUserLocationAsync(User user) {
-		System.out.println("Thread executing trackUserLocationAsync for user: " + user.getUserName() + " - Thread: " + Thread.currentThread().getName());
 
-		return CompletableFuture
-				.supplyAsync(() -> gpsUtil.getUserLocation(user.getUserId()))
+		return CompletableFuture.supplyAsync(() -> {
+					System.out.println("Thread executing trackUserLocationAsync for user: " + user.getUserName() + " - Thread: " + Thread.currentThread().getName());
+					return gpsUtil.getUserLocation(user.getUserId());
+				}, taskExecutor)
 				.thenApply(visitedLocation -> {
-
-					CompletableFuture.runAsync(() -> rewardsService.calculateRewardsAsync(user));
-
 					user.addToVisitedLocations(visitedLocation);
+
+					rewardsService.calculateRewardsAsync(user);
+
 					return visitedLocation;
 				})
 				.exceptionally(ex -> {

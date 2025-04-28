@@ -4,7 +4,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -27,11 +31,14 @@ public class RewardsService {
 	private final GpsUtil gpsUtil;
 	private final RewardCentral rewardsCentral;
 
+	private final TaskExecutor taskExecutor;
+
 	private List<Attraction> cachedAttractions = null;
 	
-	public RewardsService(GpsUtil gpsUtil, RewardCentral rewardCentral) {
+	public RewardsService(GpsUtil gpsUtil, RewardCentral rewardCentral, @Qualifier("customTaskExecutor") TaskExecutor taskExecutor) {
 		this.gpsUtil = gpsUtil;
 		this.rewardsCentral = rewardCentral;
+		this.taskExecutor = taskExecutor;
 	}
 	
 	public void setProximityBuffer(int proximityBuffer) {
@@ -67,25 +74,11 @@ public class RewardsService {
 		}
 	}
 
-	@Async("taskExecutor")
-	public void calculateRewardsAsync(User user) {
-		System.out.println("Thread executing calculateRewardsAsync for user: " + user.getUserName() + " - Thread: " + Thread.currentThread().getName());
-
-		List<VisitedLocation> visitedLocations = new ArrayList<>(user.getVisitedLocations());
-		List<Attraction> attractions = getAttractions();
-
-		for(VisitedLocation visitedLocation : visitedLocations) {
-			for(Attraction attraction : attractions) {
-				if(nearAttraction(visitedLocation, attraction)) {
-					user.addToUserRewards(
-							new UserReward(
-									visitedLocation,
-									attraction,
-									getRewardPoints(attraction, user))
-					);
-				}
-			}
-		}
+	public CompletableFuture<Void> calculateRewardsAsync(User user) {
+		return CompletableFuture.runAsync(() -> {
+			System.out.println("Thread executing calculateRewardsAsync for user: " + user.getUserName() + " - Thread: " + Thread.currentThread().getName());
+			calculateRewards(user);
+		}, taskExecutor);
 	}
 
 	public boolean isWithinAttractionProximity(Attraction attraction, Location location) {

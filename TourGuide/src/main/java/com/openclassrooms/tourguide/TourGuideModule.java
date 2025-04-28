@@ -4,12 +4,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import gpsUtil.GpsUtil;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import rewardCentral.RewardCentral;
 import com.openclassrooms.tourguide.service.RewardsService;
 
 @Configuration
 public class TourGuideModule {
-	
+
+	private ThreadPoolTaskExecutor taskExecutor;
+
 	@Bean
 	public GpsUtil getGpsUtil() {
 		return new GpsUtil();
@@ -17,7 +21,7 @@ public class TourGuideModule {
 	
 	@Bean
 	public RewardsService getRewardsService() {
-		return new RewardsService(getGpsUtil(), getRewardCentral());
+		return new RewardsService(getGpsUtil(), getRewardCentral(), taskExecutor);
 	}
 	
 	@Bean
