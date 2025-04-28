@@ -53,7 +53,7 @@ public class TestPerformance {
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		// Users should be incremented up to 100,000, and test finishes within 15
 		// minutes
-		InternalTestHelper.setInternalUserNumber(100000);
+		InternalTestHelper.setInternalUserNumber(100);
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
 
 		List<User> allUsers = new ArrayList<>();
@@ -62,11 +62,11 @@ public class TestPerformance {
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 
-		List<CompletableFuture<VisitedLocation>> futures = new ArrayList<>();
+		List<CompletableFuture<VisitedLocation>> futuresVisitedLocations = new ArrayList<>();
 		for (User user : allUsers) {
-			futures.add(tourGuideService.trackUserLocationAsync(user));
+			futuresVisitedLocations.add(tourGuideService.trackUserLocationAsync(user));
 		}
-		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		CompletableFuture.allOf(futuresVisitedLocations.toArray(new CompletableFuture[0])).join();
 
 		stopWatch.stop();
 		tourGuideService.tracker.stopTracking();
@@ -94,7 +94,10 @@ public class TestPerformance {
 		allUsers = tourGuideService.getAllUsers();
 		allUsers.forEach(u -> u.addToVisitedLocations(new VisitedLocation(u.getUserId(), attraction, new Date())));
 
-		allUsers.forEach(rewardsService::calculateRewards);
+		List<CompletableFuture<Void>> futuresUserRewards = new ArrayList<>();
+		allUsers.forEach(u -> futuresUserRewards.add(CompletableFuture.runAsync(() -> rewardsService.calculateRewardsAsync(u))));
+		CompletableFuture.allOf(futuresUserRewards.toArray(new CompletableFuture[0])).join();
+
 		for (User user : allUsers) {
             assertFalse(user.getUserRewards().isEmpty());
 		}

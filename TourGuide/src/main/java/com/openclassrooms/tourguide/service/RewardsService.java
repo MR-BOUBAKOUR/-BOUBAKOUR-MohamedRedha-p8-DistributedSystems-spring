@@ -1,9 +1,11 @@
 package com.openclassrooms.tourguide.service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import gpsUtil.GpsUtil;
@@ -48,7 +50,28 @@ public class RewardsService {
 	}
 
 	public void calculateRewards(User user) {
-		List<VisitedLocation> visitedLocations = user.getVisitedLocations();
+		List<VisitedLocation> visitedLocations = new ArrayList<>(user.getVisitedLocations());
+		List<Attraction> attractions = getAttractions();
+
+		for(VisitedLocation visitedLocation : visitedLocations) {
+			for(Attraction attraction : attractions) {
+				if(nearAttraction(visitedLocation, attraction)) {
+					user.addToUserRewards(
+							new UserReward(
+									visitedLocation,
+									attraction,
+									getRewardPoints(attraction, user))
+					);
+				}
+			}
+		}
+	}
+
+	@Async("taskExecutor")
+	public void calculateRewardsAsync(User user) {
+		System.out.println("Thread executing calculateRewardsAsync for user: " + user.getUserName() + " - Thread: " + Thread.currentThread().getName());
+
+		List<VisitedLocation> visitedLocations = new ArrayList<>(user.getVisitedLocations());
 		List<Attraction> attractions = getAttractions();
 
 		for(VisitedLocation visitedLocation : visitedLocations) {

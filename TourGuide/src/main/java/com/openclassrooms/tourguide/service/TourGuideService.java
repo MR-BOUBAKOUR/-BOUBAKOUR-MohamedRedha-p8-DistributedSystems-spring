@@ -79,13 +79,17 @@ public class TourGuideService {
 		return visitedLocation;
 	}
 
-	@Async
+	@Async("taskExecutor")
 	public CompletableFuture<VisitedLocation> trackUserLocationAsync(User user) {
+		System.out.println("Thread executing trackUserLocationAsync for user: " + user.getUserName() + " - Thread: " + Thread.currentThread().getName());
+
 		return CompletableFuture
 				.supplyAsync(() -> gpsUtil.getUserLocation(user.getUserId()))
 				.thenApply(visitedLocation -> {
+
+					CompletableFuture.runAsync(() -> rewardsService.calculateRewardsAsync(user));
+
 					user.addToVisitedLocations(visitedLocation);
-					rewardsService.calculateRewards(user);
 					return visitedLocation;
 				})
 				.exceptionally(ex -> {
