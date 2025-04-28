@@ -1,6 +1,8 @@
 package com.openclassrooms.tourguide;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import com.openclassrooms.tourguide.dto.NearbyAttractionDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +28,13 @@ public class TourGuideController {
     public String index() {
         return "Greetings from TourGuide!";
     }
-    
+
+
+    @RequestMapping("/getLocationAsync")
+    public CompletableFuture<VisitedLocation> getLocationAsync(@RequestParam String userName) throws ExecutionException, InterruptedException {
+        return tourGuideService.getUserLocationAsync(getUser(userName));
+    }
+
     @RequestMapping("/getLocation") 
     public VisitedLocation getLocation(@RequestParam String userName) {
     	return tourGuideService.getUserLocation(getUser(userName));

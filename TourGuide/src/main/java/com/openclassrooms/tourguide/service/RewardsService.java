@@ -36,14 +36,14 @@ public class RewardsService {
 	private final GpsUtil gpsUtil;
 	private final RewardCentral rewardsCentral;
 
-	private final TaskExecutor taskExecutor;
+	private final TaskExecutor customTaskExecutor;
 
 	private List<Attraction> cachedAttractions = null;
 	
-	public RewardsService(GpsUtil gpsUtil, RewardCentral rewardCentral, @Qualifier("customTaskExecutor") TaskExecutor taskExecutor) {
+	public RewardsService(GpsUtil gpsUtil, RewardCentral rewardCentral, @Qualifier("customTaskExecutor") TaskExecutor customTaskExecutor) {
 		this.gpsUtil = gpsUtil;
 		this.rewardsCentral = rewardCentral;
-		this.taskExecutor = taskExecutor;
+		this.customTaskExecutor = customTaskExecutor;
 	}
 	
 	public void setProximityBuffer(int proximityBuffer) {
@@ -84,7 +84,7 @@ public class RewardsService {
 				.runAsync(() -> {
                     logger.info("CalculateRewardsAsync for user: {} - Thread: {}", user.getUserName(), Thread.currentThread().getName());
 					calculateRewards(user);
-				}, taskExecutor)
+				}, customTaskExecutor)
 				.exceptionally(ex -> {
 					logger.error("Error in the calculateRewardsAsync : {}", ex.getMessage(), ex);
 					return null;

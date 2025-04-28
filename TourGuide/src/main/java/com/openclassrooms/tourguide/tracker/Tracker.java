@@ -1,10 +1,13 @@
 package com.openclassrooms.tourguide.tracker;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import gpsUtil.location.VisitedLocation;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,13 +44,21 @@ public class Tracker extends Thread {
 				logger.debug("Tracker stopping");
 				break;
 			}
-
 			List<User> users = tourGuideService.getAllUsers();
+
             logger.debug("Begin Tracker. Tracking {} users.", users.size());
 			stopWatch.start();
-			users.forEach(tourGuideService::trackUserLocation);
+
+			List<CompletableFuture<VisitedLocation>> futures = new ArrayList<>();
+			users.forEach(user -> {
+				CompletableFuture<VisitedLocation> future = tourGuideService.trackUserLocationAsync(user);
+				futures.add(future);
+			});
+			CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
 			stopWatch.stop();
             logger.debug("Tracker Time Elapsed: {} seconds.", TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
+
 			stopWatch.reset();
 			try {
 				logger.debug("Tracker sleeping");

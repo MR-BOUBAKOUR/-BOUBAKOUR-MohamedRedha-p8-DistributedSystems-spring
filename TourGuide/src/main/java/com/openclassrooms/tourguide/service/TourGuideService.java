@@ -10,14 +10,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import gpsUtil.GpsUtil;
@@ -36,13 +35,13 @@ public class TourGuideService {
 	private final TripPricer tripPricer = new TripPricer();
 	public final Tracker tracker;
 	boolean testMode = true;
-	private final TaskExecutor taskExecutor;
+	private final TaskExecutor customTaskExecutor;
 
 
-	public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService, @Qualifier("customTaskExecutor") TaskExecutor taskExecutor) {
+	public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService, @Qualifier("customTaskExecutor") TaskExecutor customTaskExecutor) {
 		this.gpsUtil = gpsUtil;
 		this.rewardsService = rewardsService;
-		this.taskExecutor = taskExecutor;
+		this.customTaskExecutor = customTaskExecutor;
 
 		Locale.setDefault(Locale.US);
 
@@ -85,18 +84,29 @@ public class TourGuideService {
 		return visitedLocation;
 	}
 
+	public CompletableFuture<VisitedLocation> getUserLocationAsync(User user) {
+		return (user.getVisitedLocations().isEmpty())
+				? trackUserLocationAsync(user)
+				: CompletableFuture.completedFuture(user.getLastVisitedLocation());
+	}
+	
 	public CompletableFuture<VisitedLocation> trackUserLocationAsync(User user) {
 
 		return CompletableFuture.supplyAsync(() -> {
                     logger.info("TrackUserLocationAsync for user: {} - Thread: {}", user.getUserName(), Thread.currentThread().getName());
 					return gpsUtil.getUserLocation(user.getUserId());
-				}, taskExecutor)
+				}, customTaskExecutor)
 				.thenApply(visitedLocation -> {
 					user.addToVisitedLocations(visitedLocation);
-
-					rewardsService.calculateRewardsAsync(user);
-
 					return visitedLocation;
+				})
+				.thenCompose(visitedLocation -> {
+					// Attendre que les récompenses soient calculées avant de continuer
+					return rewardsService.calculateRewardsAsync(user)
+							.thenApply(unused -> {
+								logger.info("getUserName: {} - getUserRewards: {}", user.getUserName(), user.getUserRewards());
+								return visitedLocation;
+							});
 				})
 				.exceptionally(ex -> {
 					logger.error("Error in the calculateRewardsAsync : {}", ex.getMessage(), ex);
