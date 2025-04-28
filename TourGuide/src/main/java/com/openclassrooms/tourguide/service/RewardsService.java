@@ -51,23 +51,15 @@ public class RewardsService {
 		List<VisitedLocation> visitedLocations = user.getVisitedLocations();
 		List<Attraction> attractions = getAttractions();
 
-		// the "old" locations which are already rewarded
-		Set<String> rewardedAttractionNames = new HashSet<>();
-		for (UserReward userReward : user.getUserRewards()) {
-			rewardedAttractionNames.add(userReward.attraction.attractionName);
-		}
-
-		// calculating the rewardPoints for the attraction "if not rewarded" THEN "if within the proximity buffer"
 		for(VisitedLocation visitedLocation : visitedLocations) {
 			for(Attraction attraction : attractions) {
-				if(!rewardedAttractionNames.contains(attraction.attractionName) && nearAttraction(visitedLocation, attraction)) {
+				if(nearAttraction(visitedLocation, attraction)) {
 					user.addToUserRewards(
 							new UserReward(
 									visitedLocation,
 									attraction,
 									getRewardPoints(attraction, user))
 					);
-					rewardedAttractionNames.add(attraction.attractionName);
 				}
 			}
 		}

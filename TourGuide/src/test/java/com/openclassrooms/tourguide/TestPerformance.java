@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.time.StopWatch;
@@ -52,7 +53,7 @@ public class TestPerformance {
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		// Users should be incremented up to 100,000, and test finishes within 15
 		// minutes
-		InternalTestHelper.setInternalUserNumber(10000);
+		InternalTestHelper.setInternalUserNumber(100000);
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
 
 		List<User> allUsers = new ArrayList<>();
@@ -60,9 +61,13 @@ public class TestPerformance {
 
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
+
+		List<CompletableFuture<VisitedLocation>> futures = new ArrayList<>();
 		for (User user : allUsers) {
-			tourGuideService.trackUserLocation(user);
+			futures.add(tourGuideService.trackUserLocationAsync(user));
 		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
 		stopWatch.stop();
 		tourGuideService.tracker.stopTracking();
 
@@ -76,13 +81,13 @@ public class TestPerformance {
 	public void highVolumeGetRewards() {
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
-
 		// Users should be incremented up to 100,000, and test finishes within 20
 		// minutes
 		InternalTestHelper.setInternalUserNumber(100);
+		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
+
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
-		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
 
 		Attraction attraction = gpsUtil.getAttractions().get(0);
 		List<User> allUsers = new ArrayList<>();
@@ -90,10 +95,10 @@ public class TestPerformance {
 		allUsers.forEach(u -> u.addToVisitedLocations(new VisitedLocation(u.getUserId(), attraction, new Date())));
 
 		allUsers.forEach(rewardsService::calculateRewards);
-
 		for (User user : allUsers) {
             assertFalse(user.getUserRewards().isEmpty());
 		}
+
 		stopWatch.stop();
 		tourGuideService.tracker.stopTracking();
 

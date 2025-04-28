@@ -69,7 +69,14 @@ public class User {
 		visitedLocations.clear();
 	}
 
-	public void addToUserRewards(UserReward userReward) {userRewards.add(userReward);}
+	public void addToUserRewards(UserReward userReward) {
+		boolean attractionAlreadyRewarded = userRewards.stream()
+				.anyMatch(r -> r.attraction.attractionName.equals(userReward.attraction.attractionName));
+
+		if(!attractionAlreadyRewarded) {
+			userRewards.add(userReward);
+		}
+	}
 	
 	public List<UserReward> getUserRewards() {
 		return userRewards;

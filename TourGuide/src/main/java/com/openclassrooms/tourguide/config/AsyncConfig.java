@@ -17,8 +17,8 @@ public class AsyncConfig {
 
         int cores = Runtime.getRuntime().availableProcessors();
 
-        executor.setCorePoolSize(cores * 2);
-        executor.setMaxPoolSize(cores * 4);
+        executor.setCorePoolSize(cores);
+        executor.setMaxPoolSize(cores * 2);
         executor.setQueueCapacity(500);
 
         executor.setThreadNamePrefix("TourGuide-");

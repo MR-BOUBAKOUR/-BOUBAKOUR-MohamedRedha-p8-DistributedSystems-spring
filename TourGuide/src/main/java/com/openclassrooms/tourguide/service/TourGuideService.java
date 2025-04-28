@@ -9,10 +9,12 @@ import com.openclassrooms.tourguide.user.UserReward;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import gpsUtil.GpsUtil;
@@ -75,6 +77,21 @@ public class TourGuideService {
 		rewardsService.calculateRewards(user);
 
 		return visitedLocation;
+	}
+
+	@Async
+	public CompletableFuture<VisitedLocation> trackUserLocationAsync(User user) {
+		return CompletableFuture
+				.supplyAsync(() -> gpsUtil.getUserLocation(user.getUserId()))
+				.thenApply(visitedLocation -> {
+					user.addToVisitedLocations(visitedLocation);
+					rewardsService.calculateRewards(user);
+					return visitedLocation;
+				})
+				.exceptionally(ex -> {
+					logger.error("Erreur lors du tracking utilisateur : {}", ex.getMessage(), ex);
+					return null;
+				});
 	}
 
 	public List<UserReward> getUserRewards(User user) {
