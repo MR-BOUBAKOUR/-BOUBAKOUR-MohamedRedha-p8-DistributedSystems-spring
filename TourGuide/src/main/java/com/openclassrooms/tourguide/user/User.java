@@ -68,9 +68,12 @@ public class User {
 	public void clearVisitedLocations() {
 		visitedLocations.clear();
 	}
-	
-	public void addUserReward(UserReward userReward) {
-		if(userRewards.stream().filter(r -> !r.attraction.attractionName.equals(userReward.attraction)).count() == 0) {
+
+	public void addToUserRewards(UserReward userReward) {
+		boolean attractionAlreadyRewarded = userRewards.stream()
+				.anyMatch(r -> r.attraction.attractionName.equals(userReward.attraction.attractionName));
+
+		if(!attractionAlreadyRewarded) {
 			userRewards.add(userReward);
 		}
 	}
@@ -99,4 +102,18 @@ public class User {
 		return tripDeals;
 	}
 
+	@Override
+	public String toString() {
+		return "User{" +
+				"userId=" + userId +
+				", userName='" + userName + '\'' +
+				", phoneNumber='" + phoneNumber + '\'' +
+				", emailAddress='" + emailAddress + '\'' +
+				", latestLocationTimestamp=" + latestLocationTimestamp +
+				", visitedLocations=" + visitedLocations +
+				", userRewards=" + userRewards +
+				", userPreferences=" + userPreferences +
+				", tripDeals=" + tripDeals +
+				'}';
+	}
 }

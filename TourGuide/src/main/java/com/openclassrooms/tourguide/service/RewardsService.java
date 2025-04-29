@@ -1,7 +1,17 @@
 package com.openclassrooms.tourguide.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import gpsUtil.GpsUtil;
@@ -14,6 +24,9 @@ import com.openclassrooms.tourguide.user.UserReward;
 
 @Service
 public class RewardsService {
+
+	private final Logger logger = LoggerFactory.getLogger(RewardsService.class);
+
     private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.15077945;
 
 	// proximity in miles
@@ -22,10 +35,15 @@ public class RewardsService {
 	private int attractionProximityRange = 200;
 	private final GpsUtil gpsUtil;
 	private final RewardCentral rewardsCentral;
+
+	private final TaskExecutor customTaskExecutor;
+
+	private List<Attraction> cachedAttractions = null;
 	
-	public RewardsService(GpsUtil gpsUtil, RewardCentral rewardCentral) {
+	public RewardsService(GpsUtil gpsUtil, RewardCentral rewardCentral, @Qualifier("customTaskExecutor") TaskExecutor customTaskExecutor) {
 		this.gpsUtil = gpsUtil;
 		this.rewardsCentral = rewardCentral;
+		this.customTaskExecutor = customTaskExecutor;
 	}
 	
 	public void setProximityBuffer(int proximityBuffer) {
@@ -35,31 +53,53 @@ public class RewardsService {
 	public void setDefaultProximityBuffer() {
 		proximityBuffer = defaultProximityBuffer;
 	}
-	
+
+	private List<Attraction> getAttractions() {
+		if (cachedAttractions == null) {
+			cachedAttractions = gpsUtil.getAttractions();
+		}
+		return cachedAttractions;
+	}
+
 	public void calculateRewards(User user) {
-		List<VisitedLocation> userLocations = user.getVisitedLocations();
-		List<Attraction> attractions = gpsUtil.getAttractions();
-		
-		for(VisitedLocation visitedLocation : userLocations) {
+		List<VisitedLocation> visitedLocations = new ArrayList<>(user.getVisitedLocations());
+		List<Attraction> attractions = getAttractions();
+
+		for(VisitedLocation visitedLocation : visitedLocations) {
 			for(Attraction attraction : attractions) {
-				if(user.getUserRewards().stream().filter(r -> r.attraction.attractionName.equals(attraction.attractionName)).count() == 0) {
-					if(nearAttraction(visitedLocation, attraction)) {
-						user.addUserReward(new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
-					}
+				if(nearAttraction(visitedLocation, attraction)) {
+					user.addToUserRewards(
+							new UserReward(
+									visitedLocation,
+									attraction,
+									getRewardPoints(attraction, user))
+					);
 				}
 			}
 		}
 	}
-	
+
+	public CompletableFuture<Void> calculateRewardsAsync(User user) {
+		return CompletableFuture
+				.runAsync(() -> {
+                    logger.info("CalculateRewardsAsync for user: {} - Thread: {}", user.getUserName(), Thread.currentThread().getName());
+					calculateRewards(user);
+				}, customTaskExecutor)
+				.exceptionally(ex -> {
+					logger.error("Error in the calculateRewardsAsync : {}", ex.getMessage(), ex);
+					return null;
+				});
+	}
+
 	public boolean isWithinAttractionProximity(Attraction attraction, Location location) {
-		return getDistance(attraction, location) > attractionProximityRange ? false : true;
+		return !(getDistance(attraction, location) > attractionProximityRange);
 	}
 	
 	private boolean nearAttraction(VisitedLocation visitedLocation, Attraction attraction) {
-		return getDistance(attraction, visitedLocation.location) > proximityBuffer ? false : true;
+		return !(getDistance(attraction, visitedLocation.location) > proximityBuffer);
 	}
-	
-	private int getRewardPoints(Attraction attraction, User user) {
+
+	public int getRewardPoints(Attraction attraction, User user) {
 		return rewardsCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
 	}
 	
@@ -73,8 +113,7 @@ public class RewardsService {
                                + Math.cos(lat1) * Math.cos(lat2) * Math.cos(lon1 - lon2));
 
         double nauticalMiles = 60 * Math.toDegrees(angle);
-        double statuteMiles = STATUTE_MILES_PER_NAUTICAL_MILE * nauticalMiles;
-        return statuteMiles;
-	}
 
+        return STATUTE_MILES_PER_NAUTICAL_MILE * nauticalMiles;
+	}
 }
