@@ -58,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: javadocs
-          path: TourGuide/target/reports/apidocs/
+          path: TourGuide/target/site/apidocs/
 
       # GitHub Pages
 
@@ -66,7 +66,7 @@ jobs:
         run: |
           mkdir -p gh-pages-build
           cp -r TourGuide/target/site/jacoco-ut gh-pages-build/jacoco
-          cp -r TourGuide/target/reports/apidocs gh-pages-build/javadocs
+          cp -r TourGuide/target/site/apidocs gh-pages-build/javadocs
 
       - name: Deploy JavaDocs and JaCoCo to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
