@@ -19,16 +19,9 @@ jobs:
           cache: maven
 
       - name: Copy local JARs to local Maven repository
-        run: |
-          mkdir -p ~/.m2/repository/gpsUtil/gpsUtil/1.0.0
-          cp ./TourGuide/libs/gpsUtil.jar ~/.m2/repository/gpsUtil/gpsUtil/1.0.0/gpsUtil-1.0.0.jar
-          
-          mkdir -p ~/.m2/repository/tripPricer/tripPricer/1.0.0
-          cp ./TourGuide/libs/TripPricer.jar ~/.m2/repository/tripPricer/tripPricer/1.0.0/tripPricer-1.0.0.jar
-          
-          mkdir -p ~/.m2/repository/rewardCentral/rewardCentral/1.0.0
-          cp ./TourGuide/libs/RewardCentral.jar ~/.m2/repository/rewardCentral/rewardCentral/1.0.0/rewardCentral-1.0.0.jar
-
+          mvn install:install-file -Dfile=./TourGuide/libs/GpsUtil.jar -DgroupId=gpsUtil -DartifactId=gpsUtil -Dversion=1.0.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=./TourGuide/libs/TripPricer.jar -DgroupId=tripPricer -DartifactId=tripPricer -Dversion=1.0.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=./TourGuide/libs/RewardCentral.jar -DgroupId=rewardCentral -DartifactId=rewardCentral -Dversion=1.0.0 -Dpackaging=jar
 
       - name: Build and Test (unit)
         run: mvn -B test --file TourGuide/pom.xml
