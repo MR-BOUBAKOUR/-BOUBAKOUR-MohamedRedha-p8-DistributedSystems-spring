@@ -19,4 +19,4 @@ jobs:
           cache: maven
 
       - name: Build and Test (unit)
-        run: mvn -B test --file pom.xml
+        run: mvn -B test --file TourGuide/pom.xml
