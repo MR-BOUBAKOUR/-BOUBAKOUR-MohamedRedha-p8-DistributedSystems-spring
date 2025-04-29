@@ -1,4 +1,4 @@
-package com.openclassrooms.tourguide;
+package com.openclassrooms.tourguide.controller;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -21,9 +21,12 @@ import tripPricer.Provider;
 @RestController
 public class TourGuideController {
 
-	@Autowired
-	TourGuideService tourGuideService;
-	
+    TourGuideService tourGuideService;
+
+    public TourGuideController(TourGuideService tourGuideService) {
+        this.tourGuideService = tourGuideService;
+    }
+
     @RequestMapping("/")
     public String index() {
         return "Greetings from TourGuide!";
