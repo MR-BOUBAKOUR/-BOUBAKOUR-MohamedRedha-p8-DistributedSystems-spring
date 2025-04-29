@@ -7,7 +7,7 @@ FROM eclipse-temurin:17-jdk AS build
 WORKDIR /app
 
 # Copy the TourGuide directory into the container
-COPY TourGuide/ .
+COPY . .
 
 # Install Maven (not included by default) and clean up to reduce image size
 RUN apt-get update && \
