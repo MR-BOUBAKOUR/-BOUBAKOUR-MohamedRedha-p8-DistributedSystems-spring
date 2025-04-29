@@ -65,7 +65,7 @@ jobs:
       - name: Prepare content GitHub Pages
         run: |
           mkdir -p gh-pages-build
-          cp -r TourGuide/target/site/jacoco-aggregate gh-pages-build/jacoco
+          cp -r TourGuide/target/site/jacoco-ut gh-pages-build/jacoco
           cp -r TourGuide/target/reports/apidocs gh-pages-build/javadocs
 
       - name: Deploy JavaDocs and JaCoCo to GitHub Pages
