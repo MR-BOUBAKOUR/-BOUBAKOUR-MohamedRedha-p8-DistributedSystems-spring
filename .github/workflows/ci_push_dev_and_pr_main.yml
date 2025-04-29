@@ -6,12 +6,8 @@ on:
   pull_request:
     branches: [ main ]
 
-env:
-  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/tourGuide
-
 jobs:
-  build-and-deploy:
-    if: github.event.pull_request.merged == true
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,70 +26,5 @@ jobs:
           mvn install:install-file -Dfile=./TourGuide/libs/TripPricer.jar -DgroupId=tripPricer -DartifactId=tripPricer -Dversion=1.0.0 -Dpackaging=jar
           mvn install:install-file -Dfile=./TourGuide/libs/RewardCentral.jar -DgroupId=rewardCentral -DartifactId=rewardCentral -Dversion=1.0.0 -Dpackaging=jar
 
-      - name: Build, Test & Generate JaCoCo Coverage Report
-        run: mvn -B verify --file TourGuide/pom.xml
-
-      # .jar file
-
-      - name: Upload Application JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: tourguide-application
-          path: TourGuide/target/*.jar
-          if-no-files-found: error
-
-      # Jacoco Report
-
-      - name: Upload JaCoCo Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-report
-          path: TourGuide/target/site/jacoco-ut/
-
-      # JavaDocs
-
-      - name: Generate JavaDocs
-        run: mvn javadoc:javadoc --file TourGuide/pom.xml
-
-      - name: Upload JavaDocs
-        uses: actions/upload-artifact@v4
-        with:
-          name: javadocs
-          path: TourGuide/target/reports/apidocs/
-
-      # GitHub Pages
-
-      - name: Prepare content GitHub Pages
-        run: |
-          mkdir -p gh-pages-build
-          cp -r TourGuide/target/site/jacoco-aggregate gh-pages-build/jacoco
-          cp -r TourGuide/target/reports/apidocs gh-pages-build/javadocs
-
-      - name: Deploy JavaDocs and JaCoCo to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: gh-pages-build
-
-      # Docker -> DockerHub
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and Push Production Image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ env.DOCKER_REPO }}:latest
-            ${{ env.DOCKER_REPO }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
+      - name: Build and Test (unit)
+        run: mvn -B test --file TourGuide/pom.xml
