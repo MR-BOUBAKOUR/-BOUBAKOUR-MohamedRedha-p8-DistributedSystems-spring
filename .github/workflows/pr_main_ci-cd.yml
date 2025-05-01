@@ -11,7 +11,7 @@ jobs:
   build-test-artifacts:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       security-events: write
 
     steps:
@@ -106,7 +106,7 @@ jobs:
           cp -r TourGuide/target/site/jacoco-ut gh-pages-build/jacoco
           cp -r TourGuide/target/site/apidocs gh-pages-build/javadocs
 
-      - name: Deploy JavaDocs, JaCoCo, OWASP to GitHub Pages
+      - name: Deploy JavaDocs & JaCoCo to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
