@@ -1,11 +1,11 @@
-name: TourGuide CI - Push to Dev (unit tests only)
+name: CI - UNIT TESTS (Push to Dev)
 
 on:
   push:
     branches: [ dev ]
 
 jobs:
-  build-and-test:
+  build-test:
     runs-on: ubuntu-latest
 
     steps:
