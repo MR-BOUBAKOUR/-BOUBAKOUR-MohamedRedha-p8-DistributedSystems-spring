@@ -58,12 +58,14 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH,MEDIUM'
+        #  uncomment this line if in real projects
         continue-on-error: true
 
       # +
 
       - name: Trivy vulnerability scanner (TXT)
         run: trivy image tourguide:security-scan --format table --output trivy-results.txt --severity CRITICAL,HIGH,MEDIUM
+        #  uncomment this line if in real projects
         continue-on-error: true
 
       ######################## UPLOADS ########################
@@ -74,6 +76,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
+        #  uncomment this line if in real projects
         continue-on-error: true
 
       # +
