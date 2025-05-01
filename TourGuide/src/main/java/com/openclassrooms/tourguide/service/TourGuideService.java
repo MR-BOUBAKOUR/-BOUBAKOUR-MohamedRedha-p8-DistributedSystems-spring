@@ -91,27 +91,19 @@ public class TourGuideService {
 	}
 	
 	public CompletableFuture<VisitedLocation> trackUserLocationAsync(User user) {
-
-		return CompletableFuture.supplyAsync(() -> {
-                    logger.info("TrackUserLocationAsync for user: {} - Thread: {}", user.getUserName(), Thread.currentThread().getName());
-					return gpsUtil.getUserLocation(user.getUserId());
-				}, customTaskExecutor)
-				.thenApply(visitedLocation -> {
-					user.addToVisitedLocations(visitedLocation);
-					return visitedLocation;
-				})
-				.thenCompose(visitedLocation -> {
-					// Attendre que les récompenses soient calculées avant de continuer
-					return rewardsService.calculateRewardsAsync(user)
-							.thenApply(unused -> {
-								logger.info("getUserName: {} - getUserRewards: {}", user.getUserName(), user.getUserRewards());
-								return visitedLocation;
-							});
-				})
-				.exceptionally(ex -> {
-					logger.error("Error in the calculateRewardsAsync : {}", ex.getMessage(), ex);
-					return null;
-				});
+		return CompletableFuture
+					.supplyAsync(() -> {
+						logger.info("TrackUserLocationAsync for user: {} - Thread: {}", user.getUserName(), Thread.currentThread().getName());
+						return gpsUtil.getUserLocation(user.getUserId());
+					}, customTaskExecutor)
+					.thenApply(visitedLocation -> {
+						user.addToVisitedLocations(visitedLocation);
+						return visitedLocation;
+					})
+					.exceptionally(ex -> {
+						logger.error("Error in the calculateRewardsAsync : {}", ex.getMessage(), ex);
+						return null;
+					});
 	}
 
 	public List<UserReward> getUserRewards(User user) {

@@ -1,10 +1,8 @@
-name: TourGuide CI - Push to Dev or PR main (unit tests only)
+name: TourGuide CI - Push to Dev (unit tests only)
 
 on:
   push:
     branches: [ dev ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build-and-test:
