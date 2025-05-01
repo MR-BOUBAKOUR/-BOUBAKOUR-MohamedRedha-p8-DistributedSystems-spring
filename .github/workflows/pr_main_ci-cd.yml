@@ -60,6 +60,12 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
         continue-on-error: true
 
+      # +
+
+      - name: Trivy vulnerability scanner (TXT)
+        run: trivy image tourguide:security-scan --format table --output trivy-results.txt --severity CRITICAL,HIGH,MEDIUM
+        continue-on-error: true
+
       ######################## UPLOADS ########################
 
       # Trivy scan results
@@ -69,6 +75,16 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
         continue-on-error: true
+
+      # +
+
+      - name: Upload Trivy Scan (SARIF + TXT)
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-results
+          path: |
+            trivy-results.sarif
+            trivy-results.txt
 
       # .jar file
 
