@@ -81,14 +81,14 @@ public class RewardsService {
 
 	public CompletableFuture<Void> calculateRewardsAsync(User user) {
 		return CompletableFuture
-				.runAsync(() -> {
-                    logger.info("CalculateRewardsAsync for user: {} - Thread: {}", user.getUserName(), Thread.currentThread().getName());
-					calculateRewards(user);
-				}, customTaskExecutor)
-				.exceptionally(ex -> {
-					logger.error("Error in the calculateRewardsAsync : {}", ex.getMessage(), ex);
-					return null;
-				});
+					.runAsync(() -> {
+						logger.info("CalculateRewardsAsync for user: {} - Thread: {}", user.getUserName(), Thread.currentThread().getName());
+						calculateRewards(user);
+					}, customTaskExecutor)
+					.exceptionally(ex -> {
+						logger.error("Error in the calculateRewardsAsync : {}", ex.getMessage(), ex);
+						return null;
+					});
 	}
 
 	public boolean isWithinAttractionProximity(Attraction attraction, Location location) {
