@@ -8,6 +8,7 @@ All deliverables are generated through the CI/CD pipeline:
 * [JaCoCo test coverage report](https://mr-boubakour.github.io/-BOUBAKOUR-MohamedRedha-p8-DistributedSystems-spring/jacoco/)
 * [JavaDocs](https://mr-boubakour.github.io/-BOUBAKOUR-MohamedRedha-p8-DistributedSystems-spring/javadocs/)
 * Executable JAR (artifact available on GitHub Actions)
+* Trivy dependencies-vulnerabilities scanner result (artifact available on GitHub Actions OR Vulnerability alerts - on pull requests)
 
 ## 🚀 Technologies & Stack Used
 * **Java 17 / Spring Boot 3.1.1** - core platform
