@@ -1,4 +1,4 @@
-name: TourGuide CD - merge main (deploy)
+name: CD - DEPLOYMENT TO DOCKERHUB (merge main)
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ env:
   DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/tourguide
 
 jobs:
-  docker-build-push:
+  build-push-docker:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
