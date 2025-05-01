@@ -48,23 +48,6 @@ jobs:
 
       ######################## SCANS ########################
 
-      # OWASP Dependency Vulnerability Scan (informative only)
-
-      - name: OWASP vulnerability scanner
-        uses: dependency-check/Dependency-Check_Action@main
-        id: dependency-check
-        with:
-          project: 'TourGuide'
-          path: 'TourGuide'
-          format: 'HTML'
-          out: 'reports/dependency-check'
-          args: >
-            --enableExperimental
-            --failOnCVSS 11
-            --exclude "TourGuide/target/**/*.jar"
-            --exclude "**/*test*/**"
-        continue-on-error: true
-
       # Trivy scan for Docker image vulnerabilities (informative only)
 
       - name: Trivy vulnerability scanner
@@ -85,15 +68,6 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
-        continue-on-error: true
-
-      # OWASP scan Report
-
-      - name: Upload Dependency Check Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-check-report
-          path: reports/dependency-check/
         continue-on-error: true
 
       # .jar file
@@ -131,11 +105,8 @@ jobs:
           mkdir -p gh-pages-build
           cp -r TourGuide/target/site/jacoco-ut gh-pages-build/jacoco
           cp -r TourGuide/target/site/apidocs gh-pages-build/javadocs
-          if [ -d "reports/dependency-check" ]; then
-            cp -r reports/dependency-check gh-pages-build/security
-          fi
 
-      - name: Deploy JavaDocs and JaCoCo to GitHub Pages
+      - name: Deploy JavaDocs, JaCoCo, OWASP to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
