@@ -100,6 +100,14 @@ public class TourGuideService {
 						user.addToVisitedLocations(visitedLocation);
 						return visitedLocation;
 					})
+					.thenCompose(visitedLocation -> {
+						// Attendre que les récompenses soient calculées avant de continuer
+						return rewardsService.calculateRewardsAsync(user)
+								.thenApply(unused -> {
+									logger.info("getUserName: {} - getUserRewards: {}", user.getUserName(), user.getUserRewards());
+									return visitedLocation;
+								});
+					})
 					.exceptionally(ex -> {
 						logger.error("Error in the calculateRewardsAsync : {}", ex.getMessage(), ex);
 						return null;
